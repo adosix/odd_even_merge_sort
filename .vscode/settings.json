@@ -1,0 +1,18 @@
+{
+    "files.associations": {
+        "*.txt": "asciidoc",
+        "chrono": "cpp",
+        "cmath": "cpp",
+        "array": "cpp",
+        "string": "cpp",
+        "*.tcc": "cpp",
+        "memory": "cpp",
+        "future": "cpp",
+        "istream": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
+        "utility": "cpp",
+        "variant": "cpp",
+        "iostream": "cpp"
+    }
+}
