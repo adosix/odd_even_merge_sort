@@ -1,130 +1,138 @@
 #include <iostream>
-#include <algorithm>
-#include <math.h>
 #include <fstream>
-#include "mpi.h"
+#include <mpi.h>
 using namespace std;
 
-int getMinId(int *arr, int length)
+void oddEvenMerge(int my_rank, int recievedNumbers[2])
 {
-    int maxId = 0;
-    for (int i = 1; i < length; i++)
-        if (arr[i] < arr[maxId])
-            maxId = i;
-    return maxId;
-}
-
-int getMaxId(int *arr, int length)
-{
-    int maxId = 0;
-    for (int i = 1; i < length; i++)
-        if (arr[i] > arr[maxId])
-            maxId = i;
-    return maxId;
-}
-
-void quickSort(int *arr, int low, int high)
-{
-    int left = low, right = high;
-    int tmp;
-    int pivot = arr[(left + right) / 2];
-
-    // partition
-    while (left <= right)
+    int min, max;
+    if (recievedNumbers[0] < recievedNumbers[1])
     {
-        while (arr[left] < pivot)
-        {
-            left++;
-        }
-        while (arr[right] > pivot)
-        {
-            right--;
-        }
-        if (left <= right)
-        {
-            tmp = arr[left];
-            arr[left] = arr[right];
-            arr[right] = tmp;
-            left++;
-            right--;
-        }
-    };
-
-    if (low < right)
-        quickSort(arr, low, right);
-    if (left < high)
-        quickSort(arr, left, high);
-}
-
-void merge(int *locArr, int numProcessors, int numElements, int rank)
-{
-    int adjArray[numElements];
-
-    for (int i = 0; i < numProcessors; i++)
+        min = recievedNumbers[0];
+        max = recievedNumbers[1];
+    }
+    else
     {
-        quickSort(locArr, 0, numElements - 1); // quick sort on all elements
-        int adjProc;
+        min = recievedNumbers[1];
+        max = recievedNumbers[0];
+    }
 
-        if (i % 2 == 0)
-        {
-            if (rank % 2 == 0)
-                adjProc = rank + 1;
-            else
-                adjProc = rank - 1;
-        }
-        else
-        {
-            if (rank % 2 == 0)
-                adjProc = rank - 1;
-            else
-                adjProc = rank + 1;
-        }
-
-        if (adjProc >= numProcessors || adjProc < 0)
-            continue;
-
-        if (rank % 2 == 0)
-        {
-            MPI_Send(locArr, numElements, MPI_INT, adjProc, 0, MPI_COMM_WORLD);
-            MPI_Recv(adjArray, numElements, MPI_INT, adjProc, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        }
-        else
-        {
-            MPI_Recv(adjArray, numElements, MPI_INT, adjProc, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            MPI_Send(locArr, numElements, MPI_INT, adjProc, 0, MPI_COMM_WORLD);
-        }
-        if (rank < adjProc)
-        {
-            while (true)
-            {
-                int minIndex = getMinId(adjArray, numElements);
-                int maxId = getMaxId(locArr, numElements);
-                if (adjArray[minIndex] < locArr[maxId])
-                {
-                    int tmp = adjArray[minIndex];
-                    adjArray[minIndex] = locArr[maxId];
-                    locArr[maxId] = tmp;
-                }
-                else
-                    break;
-            }
-        }
-        else
-        {
-            while (true)
-            {
-                int minIndex = getMinId(locArr, numElements);
-                int maxId = getMaxId(adjArray, numElements);
-                if (adjArray[maxId] > locArr[minIndex])
-                {
-                    int tmp = adjArray[maxId];
-                    adjArray[maxId] = locArr[minIndex];
-                    locArr[minIndex] = tmp;
-                }
-                else
-                    break;
-            }
-        }
+    switch (my_rank)
+    {
+    case 0:
+    {
+        MPI_Send(&min, 1, MPI_INT, 4, 0, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 5, 0, MPI_COMM_WORLD);
+        break;
+    }
+    case 1:
+    {
+        MPI_Send(&min, 1, MPI_INT, 4, 1, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 5, 1, MPI_COMM_WORLD);
+        break;
+    }
+    case 2:
+    {
+        MPI_Send(&min, 1, MPI_INT, 6, 0, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 7, 0, MPI_COMM_WORLD);
+        break;
+    }
+    case 3:
+    {
+        MPI_Send(&min, 1, MPI_INT, 6, 1, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 7, 1, MPI_COMM_WORLD);
+        break;
+    }
+    case 4:
+    {
+        MPI_Send(&min, 1, MPI_INT, 10, 0, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 8, 0, MPI_COMM_WORLD);
+        break;
+    }
+    case 5:
+    {
+        MPI_Send(&min, 1, MPI_INT, 8, 1, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 13, 0, MPI_COMM_WORLD);
+        break;
+    }
+    case 6:
+    {
+        MPI_Send(&min, 1, MPI_INT, 10, 1, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 9, 0, MPI_COMM_WORLD);
+        break;
+    }
+    case 7:
+    {
+        MPI_Send(&min, 1, MPI_INT, 9, 1, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 13, 1, MPI_COMM_WORLD);
+        break;
+    }
+    case 8:
+    {
+        MPI_Send(&min, 1, MPI_INT, 12, 0, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 11, 0, MPI_COMM_WORLD);
+        break;
+    }
+    case 9:
+    {
+        MPI_Send(&min, 1, MPI_INT, 12, 1, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 11, 1, MPI_COMM_WORLD);
+        break;
+    }
+    case 10:
+    {
+        MPI_Send(&min, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 14, 0, MPI_COMM_WORLD);
+        break;
+    }
+    case 11:
+    {
+        MPI_Send(&min, 1, MPI_INT, 14, 1, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 18, 0, MPI_COMM_WORLD);
+        break;
+    }
+    case 12:
+    {
+        MPI_Send(&min, 1, MPI_INT, 16, 0, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 15, 0, MPI_COMM_WORLD);
+        break;
+    }
+    case 13:
+    {
+        MPI_Send(&min, 1, MPI_INT, 15, 1, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 0, 7, MPI_COMM_WORLD);
+        break;
+    }
+    case 14:
+    {
+        MPI_Send(&min, 1, MPI_INT, 16, 1, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 17, 0, MPI_COMM_WORLD);
+        break;
+    }
+    case 15:
+    {
+        MPI_Send(&min, 1, MPI_INT, 17, 1, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 18, 1, MPI_COMM_WORLD);
+        break;
+    }
+    case 16:
+    {
+        MPI_Send(&min, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
+        break;
+    }
+    case 17:
+    {
+        MPI_Send(&min, 1, MPI_INT, 0, 3, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 0, 4, MPI_COMM_WORLD);
+        break;
+    }
+    case 18:
+    {
+        MPI_Send(&min, 1, MPI_INT, 0, 5, MPI_COMM_WORLD);
+        MPI_Send(&max, 1, MPI_INT, 0, 6, MPI_COMM_WORLD);
+        break;
+    }
     }
 }
 
@@ -137,61 +145,61 @@ void ReadFile(int *arr, int numElements)
     while (fin.good() && i < numElements)
     {
         arr[i] = fin.get();
-        // cout << arr[i] << " ";
         i++;
         if (!fin.good())
             break;
     }
-
-    printf("\n");
-    printf("\n");
 }
 
 int main(int argc, char *argv[])
 {
-    int my_rank;                           /* rank current process     */
-    int processes;                         /* number of aa processes  */
-    int elementsPerProc;                   // length of local array
-    int *array, *sortedArray, *localArray; // local array for each processor
-    int numElements = 8;                   // number of elements to sort
+    int my_rank;
+    int *array;
+    int numElements = 8;
+    int recievedNumbers[2];
 
     MPI_Init(&argc, &argv);
-
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &processes);
-
-    printf("rank: %d , number of processes: %d\n", my_rank, processes);
-
-    elementsPerProc = numElements / processes;
+    // printf("rank: %d , number of processes: %d\n", my_rank, processes);
 
     if (my_rank == 0)
     {
         array = (int *)malloc(sizeof(int) * numElements);
-        sortedArray = (int *)malloc(sizeof(int) * numElements);
         ReadFile(array, numElements);
 
-        cout << "Unsorted array:";
+        cout << "Unsorted array: ";
         for (int i = 0; i < numElements; i++)
             cout << array[i] << " ";
         cout << "\n";
+
+        for (int i = 0; i < numElements; i += 2)
+        {
+            MPI_Send(&(array[i]), 1, MPI_INT, i / 2, 0, MPI_COMM_WORLD);
+            MPI_Send(&(array[i + 1]), 1, MPI_INT, i / 2, 1, MPI_COMM_WORLD);
+        }
     }
 
-    localArray = (int *)malloc(sizeof(int) * elementsPerProc);
+    MPI_Recv(&recievedNumbers[0], 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, nullptr);
+    MPI_Recv(&recievedNumbers[1], 1, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, nullptr);
 
-    MPI_Scatter(array, elementsPerProc, MPI_INT, localArray, elementsPerProc, MPI_INT, 0, MPI_COMM_WORLD);
-
-    merge(localArray, processes, elementsPerProc, my_rank);
-
-    MPI_Gather(localArray, elementsPerProc, MPI_INT, sortedArray, elementsPerProc, MPI_INT, 0, MPI_COMM_WORLD);
+    oddEvenMerge(my_rank, recievedNumbers);
 
     if (my_rank == 0)
     {
-        cout << "Sorted array:";
+
+        int *nums = new int[numElements];
         for (int i = 0; i < numElements; i++)
         {
-            cout << sortedArray[i] << " ";
+            MPI_Recv(&nums[i], 1, MPI_INT, MPI_ANY_SOURCE, i, MPI_COMM_WORLD, nullptr);
+        }
+
+        cout << "Sorted array:   ";
+        for (int i = 0; i < numElements; i++)
+        {
+            cout << nums[i] << " ";
         }
         cout << "\n";
+        delete nums;
     }
     MPI_Finalize();
 }
